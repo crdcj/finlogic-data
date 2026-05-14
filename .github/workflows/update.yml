@@ -30,8 +30,6 @@ jobs:
           mkdir -p release_staging
           if gh release view latest >/dev/null 2>&1; then
             gh release download latest --pattern "*.parquet" --pattern "*.json" --dir release_staging
-            mkdir -p release_staging/cvm/processed
-            find release_staging -maxdepth 1 -type f \( -name "dfp_cia_aberta_*.parquet" -o -name "itr_cia_aberta_*.parquet" \) -exec mv {} release_staging/cvm/processed/ \;
           else
             echo "No latest release found yet; starting from empty release_staging."
           fi

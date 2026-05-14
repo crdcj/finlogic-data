@@ -10,14 +10,18 @@ def main() -> None:
 
     t0 = time.time()
     print("p1_cvm starting")
-    p1.run()
+    silver_ready = p1.run()
     t1 = time.time()
     print(f"p1_cvm took {t1 - t0:.2f} seconds")
 
-    print("p2_financials starting")
-    p2.run()
-    t2 = time.time()
-    print(f"p2_financials took {t2 - t1:.2f} seconds")
+    t2 = t1
+    if silver_ready:
+        print("p2_financials starting")
+        p2.run()
+        t2 = time.time()
+        print(f"p2_financials took {t2 - t1:.2f} seconds")
+    else:
+        print("p2_financials skipped")
 
     print("p3_b3 starting")
     p3.run()

@@ -7,7 +7,7 @@ import polars as pl
 import polars.selectors as cs
 import requests
 from requests.adapters import HTTPAdapter
-from src.config import CVM_RAW_DIR, PROCESSED_DIR, ensure_directories
+from src.config import CVM_RAW_DIR, FINANCIALS_PARQUET, PROCESSED_DIR, ensure_directories
 from urllib3.util.retry import Retry
 
 pl.enable_string_cache()
@@ -269,17 +269,24 @@ def process_files(filenames: List[str]):
         process_file(filename)
 
 
-def run():
+def run() -> bool:
     try:
         file_urls = get_file_urls()
     except requests.RequestException as exc:
         existing_processed = list(PROCESSED_DIR.glob("*.parquet"))
         if existing_processed:
             print(
-                "Could not reach CVM source; reusing processed parquet files from release staging. "
+                "Could not reach CVM source; reusing processed parquet files from silver cache. "
                 f"Reason: {exc}"
             )
-            return
+            return True
+        if FINANCIALS_PARQUET.exists():
+            print(
+                "Could not reach CVM source and no silver cache is available; "
+                "reusing financials.parquet from release staging. "
+                f"Reason: {exc}"
+            )
+            return False
         raise
 
     changed_urls = build_changed_urls(file_urls)
@@ -288,5 +295,6 @@ def run():
     filenames_to_process = build_filenames_to_process(changed_urls)
     if not filenames_to_process:
         print("No CVM files to process.")
-        return
+        return True
     process_files(filenames_to_process)
+    return True
