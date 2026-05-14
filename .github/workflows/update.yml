@@ -32,6 +32,7 @@ jobs:
             gh release download latest \
               --pattern "financials.parquet" \
               --pattern "trades.parquet" \
+              --pattern "language.parquet" \
               --pattern "traded_companies.json" \
               --dir release_staging
           else
@@ -64,12 +65,14 @@ jobs:
             gh release upload "$TAG" \
               release_staging/financials.parquet \
               release_staging/trades.parquet \
+              release_staging/language.parquet \
               release_staging/traded_companies.json \
               --clobber
           else
             gh release create "$TAG" \
               release_staging/financials.parquet \
               release_staging/trades.parquet \
+              release_staging/language.parquet \
               release_staging/traded_companies.json \
               --title "Latest data" \
               --notes "Updated dataset." \

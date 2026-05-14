@@ -7,6 +7,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 RELEASE_STAGING_DIR = REPO_ROOT / "release_staging"
 FINANCIALS_PARQUET = RELEASE_STAGING_DIR / "financials.parquet"
 TRADES_PARQUET = RELEASE_STAGING_DIR / "trades.parquet"
+LANGUAGE_PARQUET = RELEASE_STAGING_DIR / "language.parquet"
 TRADED_COMPANIES_JSON = RELEASE_STAGING_DIR / "traded_companies.json"
 
 # Local-only pipeline caches. Kept outside git and releases.
