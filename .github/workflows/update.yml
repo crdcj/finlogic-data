@@ -28,7 +28,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p release_staging
-          gh release download --pattern "*.parquet" --pattern "*.json" --dir release_staging
+          if gh release view latest >/dev/null 2>&1; then
+            gh release download latest --pattern "*.parquet" --pattern "*.json" --dir release_staging
+          else
+            echo "No latest release found yet; starting from empty release_staging."
+          fi
 
       - name: Run update script
         run: uv run python update.py
