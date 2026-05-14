@@ -43,6 +43,9 @@ jobs:
         run: |
           TAG="latest"
           if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release view "$TAG" --json assets --jq '.assets[].name' | while read -r asset; do
+              gh release delete-asset "$TAG" "$asset" --yes
+            done
             find release_staging -type f -print0 | xargs -0 gh release upload "$TAG" --clobber
           else
             find release_staging -type f -print0 | xargs -0 gh release create "$TAG" --title "Latest data" --notes "Updated dataset." --latest
