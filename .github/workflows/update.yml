@@ -38,10 +38,24 @@ jobs:
             echo "No latest release found yet; starting from empty release_staging."
           fi
 
+      - name: Download silver cache from release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p cache/silver/cvm/processed
+          if gh release view silver >/dev/null 2>&1; then
+            gh release download silver \
+              --pattern "dfp_cia_aberta_*.parquet" \
+              --pattern "itr_cia_aberta_*.parquet" \
+              --dir cache/silver/cvm/processed
+          else
+            echo "No silver release found yet; starting from empty silver cache."
+          fi
+
       - name: Run update script
         run: uv run python update.py
 
-      - name: Publish release
+      - name: Publish gold release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -60,4 +74,24 @@ jobs:
               --title "Latest data" \
               --notes "Updated dataset." \
               --latest
+          fi
+
+      - name: Publish silver release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="silver"
+          files=(cache/silver/cvm/processed/*.parquet)
+          if [ ! -e "${files[0]}" ]; then
+            echo "No silver parquet files found to publish."
+            exit 1
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" cache/silver/cvm/processed/*.parquet --clobber
+          else
+            gh release create "$TAG" \
+              cache/silver/cvm/processed/*.parquet \
+              --title "Silver cache" \
+              --notes "Incremental CVM parquet cache for the pipeline."
           fi

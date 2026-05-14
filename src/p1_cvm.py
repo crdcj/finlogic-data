@@ -260,7 +260,7 @@ def process_file(raw_filename: str):
     processed_filename = raw_filename.replace("zip", "parquet")
     processed_filepath = PROCESSED_DIR / processed_filename
     df.write_parquet(processed_filepath, compression="zstd")
-    print(f"{processed_filename} updated in release staging")
+    print(f"{processed_filename} updated in silver cache")
 
 
 def process_files(filenames: List[str]):
