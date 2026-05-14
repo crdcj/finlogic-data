@@ -25,6 +25,10 @@ adapter = HTTPAdapter(max_retries=retry_strategy)
 session.mount("http://", adapter)
 session.mount("https://", adapter)
 
+PAGE_TIMEOUT = (10, 60)
+FILE_SIZE_TIMEOUT = (10, 60)
+DOWNLOAD_TIMEOUT = (10, 300)
+
 
 def get_file_urls_in_page(cvm_url) -> List[str]:
     """Return a list of available CVM files.
@@ -34,7 +38,7 @@ def get_file_urls_in_page(cvm_url) -> List[str]:
     http://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/ITR/DADOS/itr_cia_aberta_2020.zip
     """
     available_files = []
-    response = session.get(cvm_url, timeout=60)
+    response = session.get(cvm_url, timeout=PAGE_TIMEOUT)
     if response.status_code != 200:
         return available_files
     # Use a regular expression to match and extract all the file links
@@ -58,7 +62,7 @@ def get_file_urls() -> List[str]:
 
 
 def get_url_file_size(url: str) -> int:
-    response = session.get(url, stream=True, timeout=60)
+    response = session.get(url, stream=True, timeout=FILE_SIZE_TIMEOUT)
     response.raise_for_status()
     file_size = int(response.headers["content-length"])
     response.close()
@@ -87,7 +91,7 @@ def build_changed_urls(file_urls: List[str]) -> List[str]:
 def update_raw_files(changed_urls: List[str]):
     for url in changed_urls:
         filename = url.split("/")[-1]
-        response = session.get(url, timeout=120)
+        response = session.get(url, timeout=DOWNLOAD_TIMEOUT)
         response.raise_for_status()
         filepath = CVM_RAW_DIR / filename
         filepath.parent.mkdir(parents=True, exist_ok=True)
@@ -266,7 +270,18 @@ def process_files(filenames: List[str]):
 
 
 def run():
-    file_urls = get_file_urls()
+    try:
+        file_urls = get_file_urls()
+    except requests.RequestException as exc:
+        existing_processed = list(PROCESSED_DIR.glob("*.parquet"))
+        if existing_processed:
+            print(
+                "Could not reach CVM source; reusing processed parquet files from release staging. "
+                f"Reason: {exc}"
+            )
+            return
+        raise
+
     changed_urls = build_changed_urls(file_urls)
     if changed_urls:
         update_raw_files(changed_urls)
