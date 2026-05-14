@@ -29,7 +29,11 @@ jobs:
         run: |
           mkdir -p release_staging
           if gh release view latest >/dev/null 2>&1; then
-            gh release download latest --pattern "*.parquet" --pattern "*.json" --dir release_staging
+            gh release download latest \
+              --pattern "financials.parquet" \
+              --pattern "trades.parquet" \
+              --pattern "traded_companies.json" \
+              --dir release_staging
           else
             echo "No latest release found yet; starting from empty release_staging."
           fi
@@ -41,34 +45,19 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          retry() {
-            local attempts=0
-            local max_attempts=5
-            local delay=2
-            until "$@"; do
-              attempts=$((attempts + 1))
-              if [ "$attempts" -ge "$max_attempts" ]; then
-                echo "Command failed after ${attempts} attempts: $*"
-                return 1
-              fi
-              echo "Retry ${attempts}/${max_attempts} for: $*"
-              sleep "$delay"
-              delay=$((delay * 2))
-            done
-          }
-
           TAG="latest"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release view "$TAG" --json assets --jq '.assets[].name' | while read -r asset; do
-              retry gh release delete-asset "$TAG" "$asset" --yes
-            done
-            find release_staging -type f -print0 | while IFS= read -r -d '' file; do
-              retry gh release upload "$TAG" "$file" --clobber
-            done
+            gh release upload "$TAG" \
+              release_staging/financials.parquet \
+              release_staging/trades.parquet \
+              release_staging/traded_companies.json \
+              --clobber
           else
-            files=()
-            while IFS= read -r -d '' file; do
-              files+=("$file")
-            done < <(find release_staging -type f -print0)
-            retry gh release create "$TAG" "${files[@]}" --title "Latest data" --notes "Updated dataset." --latest
+            gh release create "$TAG" \
+              release_staging/financials.parquet \
+              release_staging/trades.parquet \
+              release_staging/traded_companies.json \
+              --title "Latest data" \
+              --notes "Updated dataset." \
+              --latest
           fi
