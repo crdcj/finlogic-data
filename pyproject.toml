@@ -1,0 +1,20 @@
+[project]
+name = "finlogic-data"
+version = "0.1.0"
+description = "Data update jobs for FinLogic."
+readme = "README.md"
+# Aceita qualquer patch da linha 3.14, mas bloqueia minors futuras como 3.15.
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "polars",
+    "requests",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel",
+    "ruff",
+]
+
+[tool.uv]
+package = false

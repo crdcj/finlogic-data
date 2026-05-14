@@ -1,0 +1,45 @@
+name: Atualizacao FinLogic Data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "00 06 * * *"
+
+jobs:
+  update-datasets:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.14"
+
+      - name: Sync dependencies
+        run: uv sync
+
+      - name: Download data from latest release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p release_staging
+          gh release download --pattern "*.parquet" --pattern "*.json" --dir release_staging
+
+      - name: Run update script
+        run: uv run python update.py
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="latest"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" release_staging/* --clobber
+          else
+            gh release create "$TAG" release_staging/* --title "Latest data" --notes "Updated dataset." --latest
+          fi

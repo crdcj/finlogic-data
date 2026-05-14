@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+
+cache/
+data/
+release_staging/
+s3_snapshot/
+uv.lock
+.python-version
