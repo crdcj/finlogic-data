@@ -8,11 +8,13 @@ from typing import Optional
 
 import polars as pl
 import requests
+import urllib3
 
 from src.config import FINANCIALS_PARQUET, RELEASE_STAGING_DIR, TRADED_COMPANIES_JSON, TRADES_PARQUET, ensure_directories
 
 ensure_directories()
 DATA_PATH = RELEASE_STAGING_DIR
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def process_df(df: pl.DataFrame) -> pl.DataFrame:
